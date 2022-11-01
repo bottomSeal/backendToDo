@@ -1,13 +1,13 @@
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
-const { initDB } = require('./db');
+const {initDB} = require('./db');
 const ToDo = require('./db/models/ToDo.model');
 
 const app = express();
 
 app.use(cors());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 
 http.createServer(app).listen(3000, () => {
@@ -24,7 +24,7 @@ app.get("/todos", async (req, res) => {
         })
     } catch (error) {
         res.status(500).json({
-            message:error.message
+            message: error.message
         })
     }
 });
@@ -32,12 +32,16 @@ app.get("/todos", async (req, res) => {
 app.get("/todos/:id", async (req, res) => {
     try {
         const toDo = await ToDo.findByPk(req.params.id);
-        res.json({
-            toDo
-        })
+        if (!toDo){
+            res.status(404).json({
+                message: "Нет элемента с таким id"
+            })
+            return
+        }
+        res.json(toDo)
     } catch (error) {
         res.status(500).json({
-            message:error.message
+            message: error.message
         })
     }
 });
@@ -49,12 +53,10 @@ app.post("/todos", async (req, res) => {
             title: req.body.title,
             description: req.body.description
         })
-        res.json({
-            toDo
-        })
+        res.json(toDo)
     } catch (error) {
         res.status(500).json({
-            message:error.message
+            message: error.message
         })
     }
 });
@@ -62,16 +64,20 @@ app.post("/todos", async (req, res) => {
 app.patch("/todos/:id", async (req, res) => {
     try {
         const toDo = await ToDo.findByPk(req.params.id);
+        if (!toDo){
+            res.status(404).json({
+                message: "Нет элемента с таким id"
+            })
+            return
+        }
         await toDo.update({
             title: req.body.title,
             description: req.body.description
         });
-        res.json({
-            toDo
-        })
+        res.json(toDo)
     } catch (error) {
         res.status(500).json({
-            message:error.message
+            message: error.message
         })
     }
 });
@@ -80,13 +86,14 @@ app.patch("/todos/:id", async (req, res) => {
 app.delete("/todos", async (req, res) => {
     try {
         await ToDo.destroy({
-            where: {},
-            truncate: true
+            where: {}
         })
-        res.status(200).send("Удалены все ToDo");
+        res.json({
+            message: "Удалены все ToDo"
+        })
     } catch (error) {
         res.status(500).json({
-            message:error.message
+            message: error.message
         })
     }
 });
@@ -94,12 +101,22 @@ app.delete("/todos", async (req, res) => {
 app.delete("/todos/:id", async (req, res) => {
     try {
         const toDo = await ToDo.findByPk(req.params.id);
-        await toDo.destroy();
 
-        res.status(200).send("Удален ToDo по id");
+        if (!toDo){
+            res.status(404).json({
+                message: "Нет элемента с таким id"
+            })
+            return
+        }
+
+        await toDo.destroy();
+        res.json({
+            message: "Удален ToDo по id"
+        })
+
     } catch (error) {
         res.status(500).json({
-            message:error.message
+            message: error.message
         })
     }
 });
