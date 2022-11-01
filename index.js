@@ -1,88 +1,105 @@
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
+const { initDB } = require('./db');
+const ToDo = require('./db/models/ToDo.model');
 
 const app = express();
 
 app.use(cors());
-app.use(express.urlencoded({ extended: true }))
-app.use(express.json()); //если отключить, то мы не увидим запросы с фронта
-
-app.use((req, res, next) => {
-    console.log('URL =', req.url);
-    console.log('Original_URL =', req.originalUrl);
-    console.log('METHOD =', req.method);
-    console.log('HOST =', req.headers.host);
-    console.log('IsSecure', req.secure);
-    console.log('BODY', req.body);
-    console.log('QUERY', req.query);
-
-    next()
-})
-
-app.all('/test', (req, res) => {
-    res.status(200).json({ message: 'OK' })
-})
-
-app.all('/sum', (req, res) => {
-    const a = Number(req.body.a);
-    const b = Number(req.body.b);
-
-    const sum = a + b;
-
-    res.json({
-        sum
-    });
-})
-
-app.all('/reverseCase', (req, res) => {
-    const str = String(req.body.str);
-
-    let reverseStr = String("");
-
-    for (let i=0; i<str.length; i++){
-        if (str[i].toLowerCase() == str[i]){
-            reverseStr += str[i].toUpperCase();
-        }
-        else {
-            reverseStr += str[i].toLowerCase();
-        }
-    }
-
-    res.json({
-        reverseStr
-    });
-})
-
-app.all('/reverseArray', (req, res) => {
-    const arr = req.body.arr;
-
-    let reverseArr = arr.reverse();
-
-    res.json({
-        reverseArr
-    });
-})
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 http.createServer(app).listen(3000, () => {
     console.log('Server is working on port 3000')
 })
 
-// http://localhost:3000/test
+initDB();
 
-// http - протокол(80)
-// https(443)
+app.get("/todos", async (req, res) => {
+    try {
+        const toDoList = await ToDo.findAll();
+        res.json({
+            toDoList
+        })
+    } catch (error) {
+        res.status(500).json({
+            message:error.message
+        })
+    }
+});
 
-// localhost - домен(хост)
-// 127.0.0.1 === localhost
+app.get("/todos/:id", async (req, res) => {
+    try {
+        const toDo = await ToDo.findByPk(req.params.id);
+        res.json({
+            toDo
+        })
+    } catch (error) {
+        res.status(500).json({
+            message:error.message
+        })
+    }
+});
 
-// :3000 - порт
-// 2 в 16 портов = 65536
-// 22 - ssh протокол
 
-// GET - получить данные
-// POST - создать
-// PUT - заменить
-// PATCH - обновить
-// DELETE - удалить
+app.post("/todos", async (req, res) => {
+    try {
+        const toDo = await ToDo.create({
+            title: req.body.title,
+            description: req.body.description
+        })
+        res.json({
+            toDo
+        })
+    } catch (error) {
+        res.status(500).json({
+            message:error.message
+        })
+    }
+});
 
+app.patch("/todos/:id", async (req, res) => {
+    try {
+        const toDo = await ToDo.findByPk(req.params.id);
+        await toDo.update({
+            title: req.body.title,
+            description: req.body.description
+        });
+        res.json({
+            toDo
+        })
+    } catch (error) {
+        res.status(500).json({
+            message:error.message
+        })
+    }
+});
+
+
+app.delete("/todos", async (req, res) => {
+    try {
+        await ToDo.destroy({
+            where: {},
+            truncate: true
+        })
+        res.status(200).send("Удалены все ToDo");
+    } catch (error) {
+        res.status(500).json({
+            message:error.message
+        })
+    }
+});
+
+app.delete("/todos/:id", async (req, res) => {
+    try {
+        const toDo = await ToDo.findByPk(req.params.id);
+        await toDo.destroy();
+
+        res.status(200).send("Удален ToDo по id");
+    } catch (error) {
+        res.status(500).json({
+            message:error.message
+        })
+    }
+});
