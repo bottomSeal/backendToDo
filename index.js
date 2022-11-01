@@ -19,9 +19,11 @@ initDB();
 app.get("/todos", async (req, res) => {
     try {
         const toDoList = await ToDo.findAll();
+
         res.json({
             toDoList
         })
+
     } catch (error) {
         res.status(500).json({
             message: error.message
@@ -32,13 +34,15 @@ app.get("/todos", async (req, res) => {
 app.get("/todos/:id", async (req, res) => {
     try {
         const toDo = await ToDo.findByPk(req.params.id);
-        if (!toDo){
+        if (!toDo) {
             res.status(404).json({
                 message: "Нет элемента с таким id"
             })
             return
         }
+
         res.json(toDo)
+
     } catch (error) {
         res.status(500).json({
             message: error.message
@@ -53,6 +57,7 @@ app.post("/todos", async (req, res) => {
             title: req.body.title,
             description: req.body.description
         })
+
         res.json(toDo)
     } catch (error) {
         res.status(500).json({
@@ -64,16 +69,19 @@ app.post("/todos", async (req, res) => {
 app.patch("/todos/:id", async (req, res) => {
     try {
         const toDo = await ToDo.findByPk(req.params.id);
-        if (!toDo){
+
+        if (!toDo) {
             res.status(404).json({
                 message: "Нет элемента с таким id"
             })
             return
         }
+
         await toDo.update({
             title: req.body.title,
             description: req.body.description
         });
+
         res.json(toDo)
     } catch (error) {
         res.status(500).json({
@@ -88,9 +96,11 @@ app.delete("/todos", async (req, res) => {
         await ToDo.destroy({
             where: {}
         })
+
         res.json({
             message: "Удалены все ToDo"
         })
+
     } catch (error) {
         res.status(500).json({
             message: error.message
@@ -102,7 +112,7 @@ app.delete("/todos/:id", async (req, res) => {
     try {
         const toDo = await ToDo.findByPk(req.params.id);
 
-        if (!toDo){
+        if (!toDo) {
             res.status(404).json({
                 message: "Нет элемента с таким id"
             })
